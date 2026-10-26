@@ -6,17 +6,17 @@ Research date: 2026-10-25. Target: an Azure Commercial development MVP, not an a
 
 Three research subagents ran in parallel against public OpenTDF and Microsoft sources. Documentation/source inspection is complete; integration hypotheses remain subject to the gates below. No Azure tenant or live OpenTDF deployment was tested during research.
 
-| Track | Questions | Evidence and deliverable |
-| --- | --- | --- |
-| OpenTDF and SDK | What is protected? Who releases keys? Which official SDK is maintained? How does a user decrypt? | Format, architecture, SDK source/API inventory, allow/deny/revoke experiment |
-| Identity and control ownership | Can Entra be the issuer? Which claims and audiences are needed? What cannot Azure replace? | OIDC/configuration sources, app-role mappings, control matrix, sender-constraint and key-custody gaps |
-| Deployment and operations | What must be provisioned? What is Day 1 versus Day 2? What fails during recovery or upgrades? | Platform/chart prerequisites, Azure hosting comparison, operational acceptance criteria |
+| Track                          | Questions                                                                                        | Evidence and deliverable                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| OpenTDF and SDK                | What is protected? Who releases keys? Which official SDK is maintained? How does a user decrypt? | Format, architecture, SDK source/API inventory, allow/deny/revoke experiment                          |
+| Identity and control ownership | Can Entra be the issuer? Which claims and audiences are needed? What cannot Azure replace?       | OIDC/configuration sources, app-role mappings, control matrix, sender-constraint and key-custody gaps |
+| Deployment and operations      | What must be provisioned? What is Day 1 versus Day 2? What fails during recovery or upgrades?    | Platform/chart prerequisites, Azure hosting comparison, operational acceptance criteria               |
 
 Prefer tagged upstream source and the installed SDK's types over examples on moving documentation pages. Pin packages, platform images, and administrative tooling independently: their release numbers are not interchangeable.
 
 ## 1. What OpenTDF is
 
-OpenTDF is an open-source data-centric protection framework. A TDF object packages an encrypted payload with a manifest containing policy and key-access information. Azure Storage encryption alone is not equivalent: a downloaded TDF remains encrypted outside the storage account.
+OpenTDF is an open-source data-centric protection framework built around the Trusted Data Format (TDF). A TDF object packages an encrypted payload with a manifest containing policy and key-access information. Azure Storage encryption alone is not equivalent: a downloaded TDF remains encrypted outside the storage account. OpenTDF is not itself a managed Azure service or a subscription to a commercial Virtru product.
 
 An SDK creates and reads protected objects. The Policy Service manages attributes and subject mappings; Entity Resolution supplies trusted entity information; Authorization makes policy decisions; the Key Access Server (KAS) enforces key release. On a fresh decrypt, KAS verifies policy binding and authorization before rewrapping the payload key to the requesting client.
 
@@ -61,16 +61,16 @@ The official SDK inventory lists Go, Java, and JavaScript. The browser MVP uses 
 
 ## 3. Day 1 versus Day 2
 
-| Area | Day 1: working demonstration | Day 2: sustained operation |
-| --- | --- | --- |
-| Identity | Entra registrations, scopes, user roles, issuer/audience validation | Assignment governance, token expiry, Conditional Access changes, privileged access |
-| Policy | Namespace, attribute, KAS registration/key association, subject mapping | Reviewed changes, rollback, propagation measurements, separation of administration |
-| Files | Browser protection, private upload/list/retrieval, allow/deny | Retention, deletion, metadata exposure, quotas, malware/DLP strategy |
-| Keys | Generate and persist development KAS key material | Rotation with historical decryptability, compromise response, custody, recovery |
-| Platform | OpenTDF, PostgreSQL, HTTPS, trusted origins | Migrations, patching, image provenance, capacity, health and availability |
-| Recovery | Establish backup settings and document dependencies | Restore policy DB and required historical keys together; exercise recovery |
-| Evidence | Reproduce allow/deny/revoke with real identities | Correlate sign-in, API, Storage, policy-change, and KAS audit events |
-| Azure | Deployable Bicep and managed identities | Cost budgets, network hardening, DR, regional/cloud service availability |
+| Area     | Day 1: working demonstration                                            | Day 2: sustained operation                                                         |
+| -------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Identity | Entra registrations, scopes, user roles, issuer/audience validation     | Assignment governance, token expiry, Conditional Access changes, privileged access |
+| Policy   | Namespace, attribute, KAS registration/key association, subject mapping | Reviewed changes, rollback, propagation measurements, separation of administration |
+| Files    | Browser protection, private upload/list/retrieval, allow/deny           | Retention, deletion, metadata exposure, quotas, malware/DLP strategy               |
+| Keys     | Generate and persist development KAS key material                       | Rotation with historical decryptability, compromise response, custody, recovery    |
+| Platform | OpenTDF, PostgreSQL, HTTPS, trusted origins                             | Migrations, patching, image provenance, capacity, health and availability          |
+| Recovery | Establish backup settings and document dependencies                     | Restore policy DB and required historical keys together; exercise recovery         |
+| Evidence | Reproduce allow/deny/revoke with real identities                        | Correlate sign-in, API, Storage, policy-change, and KAS audit events               |
+| Azure    | Deployable Bicep and managed identities                                 | Cost budgets, network hardening, DR, regional/cloud service availability           |
 
 OpenTDF's quickstart is explicitly for evaluation/development. Its Helm chart is a useful deployment reference, not evidence that an Azure Container Apps adaptation is production-supported.
 
@@ -82,18 +82,28 @@ Sources:
 - [Azure Container Apps ingress](https://learn.microsoft.com/en-us/azure/container-apps/ingress-overview)
 - [PostgreSQL backup and restore](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-backup-restore)
 
+### Deployment approaches considered
+
+| Approach                                                           | Benefit                                                   | Trade-off and decision                                                                             |
+| ------------------------------------------------------------------ | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Azure application plus an existing OpenTDF endpoint                | Smallest application footprint                            | Requires an independently operated platform; rejected for this repo's self-contained demonstration |
+| Application and OpenTDF on Container Apps, with managed PostgreSQL | Complete Azure demonstration without a Kubernetes cluster | Selected for development; Azure-specific integration must be verified and operated by this project |
+| Application and OpenTDF on AKS using the official chart            | Closest to upstream Kubernetes deployment artifacts       | Greater operational footprint; defer until a workload justifies it                                 |
+
+For the application trust boundary, browser-side SDK processing was selected over a trusted plaintext-processing backend. This keeps normal backend/storage operations ciphertext-only, at the cost of browser-to-KAS connectivity and a trusted frontend origin/build pipeline.
+
 ## 4. Controls that Azure and Entra can own
 
-| Control | Delegate to | Boundary that remains |
-| --- | --- | --- |
-| Authentication, MFA, sign-in/device/risk policy | Entra ID and Conditional Access | OpenTDF independently validates the access token |
-| App-role assignments and entitlement inputs | Entra ID | OpenTDF subject mappings and Authorization decide object access |
-| Azure resource administration and elevation | Azure RBAC and PIM | OpenTDF policy administration must also be authorized and separated |
-| App-to-Blob authentication | Managed identity and Azure Storage RBAC | Blob access retrieves ciphertext; it does not release a TDF payload key |
-| Storage/network isolation | Private endpoints, TLS, Azure networking | TDF encryption and trusted KAS validation remain necessary |
-| Operational secrets | Key Vault and managed identity | Secret storage is not a native Key Vault KAS cryptographic provider |
-| Infrastructure monitoring | Azure Monitor and Log Analytics | Collect OpenTDF decision/key-release audit events as a separate signal |
-| Payload encryption, policy binding, key release | **Keep in OpenTDF** | Do not replace with a UI check, SAS, gateway header, or storage role |
+| Control                                         | Delegate to                              | Boundary that remains                                                   |
+| ----------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
+| Authentication, MFA, sign-in/device/risk policy | Entra ID and Conditional Access          | OpenTDF independently validates the access token                        |
+| App-role assignments and entitlement inputs     | Entra ID                                 | OpenTDF subject mappings and Authorization decide object access         |
+| Azure resource administration and elevation     | Azure RBAC and PIM                       | OpenTDF policy administration must also be authorized and separated     |
+| App-to-Blob authentication                      | Managed identity and Azure Storage RBAC  | Blob access retrieves ciphertext; it does not release a TDF payload key |
+| Storage/network isolation                       | Private endpoints, TLS, Azure networking | TDF encryption and trusted KAS validation remain necessary              |
+| Operational secrets                             | Key Vault and managed identity           | Secret storage is not a native Key Vault KAS cryptographic provider     |
+| Infrastructure monitoring                       | Azure Monitor and Log Analytics          | Collect OpenTDF decision/key-release audit events as a separate signal  |
+| Payload encryption, policy binding, key release | **Keep in OpenTDF**                      | Do not replace with a UI check, SAS, gateway header, or storage role    |
 
 ### Integration cautions
 
@@ -117,16 +127,16 @@ Sources:
 
 ## 5. Evidence gates before declaring the MVP operational
 
-| Gate | Required evidence |
-| --- | --- |
-| SDK compatibility | Pinned SDK builds; browser protects/opens a real TDF against the pinned platform |
+| Gate                       | Required evidence                                                                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| SDK compatibility          | Pinned SDK builds; browser protects/opens a real TDF against the pinned platform                                                   |
 | Direct Entra compatibility | Real tenant access tokens accepted for the correct audience; wrong tenant/audience rejected; claims resolver and role mapping work |
-| Enforcement | Same ciphertext: allow for one identity, deny for another, deny after policy revocation on fresh key request |
-| Failure behavior | Expired token, unavailable KAS, invalid TDF, and oversized upload fail explicitly; no plaintext fallback |
-| Storage isolation | API managed identity accesses private Blob; anonymous access and shared-key authentication disabled |
-| Least privilege | Normal file users cannot modify policy, register KAS keys, or obtain policy-admin tokens |
-| Recoverability | Required KAS keys persist across replacement; policy data is not an ephemeral container filesystem |
-| Deployment | Bicep compiles, container builds, deployment inputs and tenant setup are documented; live verification is explicitly separate |
+| Enforcement                | Same ciphertext: allow for one identity, deny for another, deny after policy revocation on fresh key request                       |
+| Failure behavior           | Expired token, unavailable KAS, invalid TDF, and oversized upload fail explicitly; no plaintext fallback                           |
+| Storage isolation          | API managed identity accesses private Blob; anonymous access and shared-key authentication disabled                                |
+| Least privilege            | Normal file users cannot modify policy, register KAS keys, or obtain policy-admin tokens                                           |
+| Recoverability             | Required KAS keys persist across replacement; policy data is not an ephemeral container filesystem                                 |
+| Deployment                 | Bicep compiles, container builds, deployment inputs and tenant setup are documented; live verification is explicitly separate      |
 
 ## 6. Deferred production research
 

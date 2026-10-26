@@ -1,0 +1,37 @@
+{
+  "name": "opentdf-azure-files",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev:api": "node --env-file-if-exists=.env --watch --import tsx src/server/index.ts",
+    "dev:web": "vite --host 127.0.0.1",
+    "start": "node --env-file-if-exists=.env dist/server/server/index.js",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && vite build && tsc -p tsconfig.server.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "policy:bootstrap": "node --env-file-if-exists=.env --import tsx scripts/bootstrap.ts",
+    "smoke": "node --env-file-if-exists=.env --import tsx scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@azure/identity": "4.14.0",
+    "@azure/msal-browser": "5.26.0",
+    "@azure/storage-blob": "12.34.0",
+    "@fastify/static": "10.1.7",
+    "@opentdf/sdk": "0.23.0",
+    "fastify": "5.12.7",
+    "jose": "6.2.13"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
+  }
+}

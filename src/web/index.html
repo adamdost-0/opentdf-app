@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenTDF Azure Files</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">Data-centric access / development MVP</p>
+        <h1>OpenTDF Azure Files</h1>
+        <p>Azure holds the encrypted file. OpenTDF decides who can open it.</p>
+        <div class="toolbar">
+          <button id="signin">Sign in</button>
+          <button id="signout" disabled>Sign out</button>
+          <span id="account">Not signed in</span>
+        </div>
+      </header>
+      <section aria-labelledby="protect-title">
+        <h2 id="protect-title">1. Protect and upload</h2>
+        <p>
+          Encryption happens in this browser. Maximum plaintext size: 10 MiB.
+        </p>
+        <p>Policy attribute: <code id="attribute"></code></p>
+        <label for="file">Choose a local file</label>
+        <input id="file" type="file" disabled />
+        <button id="upload" disabled>Encrypt and upload</button>
+      </section>
+      <section aria-labelledby="files-title">
+        <div class="toolbar">
+          <h2 id="files-title">2. Retrieve and open</h2>
+          <button id="refresh" disabled>Refresh files</button>
+        </div>
+        <p>
+          File access permits ciphertext retrieval, not decryption. Try the same
+          file as an entitled and an unentitled user.
+        </p>
+        <ul id="files"></ul>
+        <p id="page-note"></p>
+      </section>
+      <p id="status" role="status" aria-live="polite">
+        Loading configuration...
+      </p>
+      <footer>
+        Revocation blocks future key release, not plaintext or keys already
+        obtained. This is not an accredited production deployment.
+      </footer>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

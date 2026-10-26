@@ -1,6 +1,6 @@
 # OpenTDF Azure file-access MVP design
 
-Status: design approved in conversation; written specification awaiting review.
+Status: design and written specification approved in conversation.
 
 ## Decisions approved
 
@@ -27,12 +27,12 @@ Container Apps is an application-specific adaptation of OpenTDF deployment requi
 
 ## Components and boundaries
 
-| Component | Responsibility | Depends on |
-| --- | --- | --- |
-| Browser UI | Sign-in, attribute selection, SDK protect/decrypt, explicit errors | Entra, authenticated API, trusted OpenTDF endpoint |
-| File API | Validate tokens/scope/role, limit and store/retrieve ciphertext | JWT discovery/JWKS, Blob SDK, managed identity |
-| OpenTDF | Validate tokens, resolve claims, evaluate policy, enforce key release | OIDC discovery, policy database, persistent KAS keys |
-| Bootstrap tooling | Configure fixture attribute and mappings with administrator authorization | Pinned administrative API/tooling, operator-supplied credentials |
+| Component                    | Responsibility                                                                  | Depends on                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Browser UI                   | Sign-in, attribute selection, SDK protect/decrypt, explicit errors              | Entra, authenticated API, trusted OpenTDF endpoint                  |
+| File API                     | Validate tokens/scope/role, limit and store/retrieve ciphertext                 | JWT discovery/JWKS, Blob SDK, managed identity                      |
+| OpenTDF                      | Validate tokens, resolve claims, evaluate policy, enforce key release           | OIDC discovery, policy database, persistent KAS keys                |
+| Bootstrap tooling            | Configure fixture attribute and mappings with administrator authorization       | Pinned administrative API/tooling, operator-supplied credentials    |
 | Bicep and deployment scripts | Provision isolated application infrastructure and document tenant prerequisites | Azure CLI/Bicep, supplied tenant/resource identifiers, built images |
 
 Use the simplest viable repository layout: application source, focused tests, infrastructure, operational scripts, and documentation. Pin upstream dependencies and validate actual APIs rather than recreating cryptography or inventing SDK wrappers.

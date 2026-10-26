@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+.secrets
+node_modules
+dist
+coverage
+*.pem
+*.key
+*.local.json
+docs
+infra
+.azure
+tests
+scripts

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": { "value": "eastus2" },
+    "namePrefix": { "value": "otdfdev" },
+    "appName": { "value": "ca-otdfdev-files" },
+    "platformName": { "value": "ca-otdfdev-platform" },
+    "entraTenantId": { "value": "REPLACE-WITH-TENANT-GUID" },
+    "entraSpaClientId": { "value": "REPLACE-WITH-SPA-CLIENT-GUID" },
+    "entraApiAudience": { "value": "REPLACE-WITH-API-CLIENT-GUID" },
+    "opentdfAttribute": {
+      "value": "https://demo.opentdf.local/attr/project/value/alpha"
+    }
+  }
+}

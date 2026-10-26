@@ -1,0 +1,6 @@
+package-lock.json
+dist
+node_modules
+*.bicep
+*.bicepparam
+*.ps1
